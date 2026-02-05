@@ -67,6 +67,7 @@
       position: absolute;
       left: 55%;
       top: 0;
+      transition: transform 0.25s ease-out; /* smoother movement */
     }
 
     .message {
@@ -118,16 +119,30 @@
     const yesBtn = document.getElementById("yes");
     const message = document.getElementById("message");
 
-    // ---- Make "No" run away when cursor gets close ----
+    // ---- Smooth "No" movement ----
+    let noX = 0;
+    let noY = 0;
+
     document.addEventListener("mousemove", (e) => {
       const rect = noBtn.getBoundingClientRect();
-      const dx = Math.abs(e.clientX - (rect.left + rect.width / 2));
-      const dy = Math.abs(e.clientY - (rect.top + rect.height / 2));
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
 
-      if (dx < 90 && dy < 70) {
-        const x = Math.random() * 320 - 160;
-        const y = Math.random() * 220 - 110;
-        noBtn.style.transform = `translate(${x}px, ${y}px)`;
+      const dx = e.clientX - centerX;
+      const dy = e.clientY - centerY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance < 130) {
+        // move opposite direction of cursor
+        const step = 18;
+        noX += (-dx / distance) * step;
+        noY += (-dy / distance) * step;
+
+        // clamp so it stays near the card and doesn't go crazy
+        noX = Math.max(-180, Math.min(180, noX));
+        noY = Math.max(-120, Math.min(120, noY));
+
+        noBtn.style.transform = `translate(${noX}px, ${noY}px)`;
       }
     });
 
@@ -185,7 +200,6 @@
       if (!confettiOn) return;
 
       const now = Date.now();
-      const w = window.innerWidth;
       const h = window.innerHeight;
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -195,14 +209,12 @@
         p.y += p.vy;
         p.rot += p.vr;
 
-        // tiny air drift / slowdown
         p.vx *= 0.995;
         p.vy *= 0.995;
 
-        // respawn if off-screen
         if (p.y > h + 40) {
           p.y = -20;
-          p.x = Math.random() * w;
+          p.x = Math.random() * window.innerWidth;
           p.vy = 3 + Math.random() * 6;
           p.vx = -2 + Math.random() * 4;
         }
@@ -218,7 +230,7 @@
       requestAnimationFrame(stepConfetti);
     }
 
-    function startConfetti(ms = 2800) {
+    function startConfetti(ms = 3000) {
       spawnConfetti(190);
       confettiOn = true;
       confettiEndTime = Date.now() + ms;
