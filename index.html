@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>💘 Valentine?</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+      font-family: "Comic Sans MS", "Poppins", sans-serif;
+      overflow: hidden;
+    }
+
+    .card {
+      background: white;
+      padding: 40px 50px;
+      border-radius: 20px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+      position: relative;
+      z-index: 2;
+    }
+
+    h1 {
+      margin-bottom: 30px;
+      font-size: 32px;
+      color: #ff4d6d;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      position: relative;
+      height: 52px; /* keeps space stable when No moves */
+    }
+
+    button {
+      padding: 12px 28px;
+      font-size: 18px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+
+    #yes {
+      background: #ff4d6d;
+      color: white;
+      position: relative;
+    }
+
+    #yes:hover {
+      transform: scale(1.08);
+    }
+
+    #no {
+      background: #ddd;
+      color: #333;
+      position: absolute;
+      left: 55%;
+      top: 0;
+    }
+
+    .message {
+      display: none;
+      margin-top: 25px;
+      font-size: 22px;
+      color: #ff4d6d;
+      font-weight: bold;
+    }
+
+    /* Confetti canvas */
+    #confetti{
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    /* Pop animation */
+    .pop {
+      animation: pop 0.35s ease-out;
+    }
+    @keyframes pop {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.12); }
+      100% { transform: scale(1); }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="card">
+    <h1>Will you be my Valentine? 💘</h1>
+
+    <div class="buttons">
+      <button id="yes">Yes 💖</button>
+      <button id="no">No 😬</button>
+    </div>
+
+    <div class="message" id="message">YAYYY 💕 I love you 😘</div>
+  </div>
+
+  <canvas id="confetti"></canvas>
+
+  <script>
+    const noBtn = document.getElementById("no");
+    const yesBtn = document.getElementById("yes");
+    const message = document.getElementById("message");
+
+    // ---- Make "No" run away when cursor gets close ----
+    document.addEventListener("mousemove", (e) => {
+      const rect = noBtn.getBoundingClientRect();
+      const dx = Math.abs(e.clientX - (rect.left + rect.width / 2));
+      const dy = Math.abs(e.clientY - (rect.top + rect.height / 2));
+
+      if (dx < 90 && dy < 70) {
+        const x = Math.random() * 320 - 160;
+        const y = Math.random() * 220 - 110;
+        noBtn.style.transform = `translate(${x}px, ${y}px)`;
+      }
+    });
+
+    // ---- Confetti (no libraries) ----
+    const canvas = document.getElementById("confetti");
+    const ctx = canvas.getContext("2d");
+    let confettiPieces = [];
+    let confettiOn = false;
+    let confettiEndTime = 0;
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth * devicePixelRatio;
+      canvas.height = window.innerHeight * devicePixelRatio;
+      ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+    }
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+
+    function spawnConfetti(count = 180) {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const colors = ["#ff4d6d", "#7c5cff", "#2ee59d", "#ffd166", "#4cc9f0", "#f72585"];
+
+      confettiPieces = Array.from({ length: count }, () => ({
+        x: Math.random() * w,
+        y: -20 - Math.random() * h * 0.3,
+        w: 6 + Math.random() * 8,
+        h: 8 + Math.random() * 12,
+        vx: -2 + Math.random() * 4,
+        vy: 3 + Math.random() * 6,
+        rot: Math.random() * Math.PI,
+        vr: -0.2 + Math.random() * 0.4,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        shape: Math.random() < 0.25 ? "circle" : "rect"
+      }));
+    }
+
+    function drawPiece(p) {
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.fillStyle = p.color;
+
+      if (p.shape === "circle") {
+        ctx.beginPath();
+        ctx.arc(0, 0, Math.min(p.w, p.h) / 2, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      }
+      ctx.restore();
+    }
+
+    function stepConfetti() {
+      if (!confettiOn) return;
+
+      const now = Date.now();
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      for (const p of confettiPieces) {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.rot += p.vr;
+
+        // tiny air drift / slowdown
+        p.vx *= 0.995;
+        p.vy *= 0.995;
+
+        // respawn if off-screen
+        if (p.y > h + 40) {
+          p.y = -20;
+          p.x = Math.random() * w;
+          p.vy = 3 + Math.random() * 6;
+          p.vx = -2 + Math.random() * 4;
+        }
+        drawPiece(p);
+      }
+
+      if (now > confettiEndTime) {
+        confettiOn = false;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        return;
+      }
+
+      requestAnimationFrame(stepConfetti);
+    }
+
+    function startConfetti(ms = 2800) {
+      spawnConfetti(190);
+      confettiOn = true;
+      confettiEndTime = Date.now() + ms;
+      requestAnimationFrame(stepConfetti);
+    }
+
+    // ---- YES button: confetti + pop + message ----
+    yesBtn.addEventListener("click", () => {
+      message.textContent = "YAYYY 💕 Best decision ever 😘";
+      message.style.display = "block";
+
+      const card = document.querySelector(".card");
+      card.classList.remove("pop");
+      void card.offsetWidth; // restart animation
+      card.classList.add("pop");
+
+      startConfetti(3000);
+
+      yesBtn.style.display = "none";
+      noBtn.style.display = "none";
+    });
+  </script>
+</body>
+</html>
