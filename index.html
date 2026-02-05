@@ -25,12 +25,14 @@
       box-shadow: 0 20px 40px rgba(0,0,0,0.2);
       position: relative;
       z-index: 2;
+      max-width: 520px;
     }
 
     h1 {
-      margin-bottom: 30px;
-      font-size: 32px;
+      margin: 0 0 30px;
+      font-size: 30px;
       color: #ff4d6d;
+      line-height: 1.15;
     }
 
     .buttons {
@@ -72,10 +74,31 @@
 
     .message {
       display: none;
-      margin-top: 25px;
+      margin-top: 18px;
       font-size: 22px;
       color: #ff4d6d;
       font-weight: bold;
+    }
+
+    /* Muffin pop-up */
+    .muffin-wrap {
+      display: none;
+      margin-top: 16px;
+      animation: floatIn 0.5s ease-out;
+    }
+    .muffin {
+      font-size: 88px;
+      line-height: 1;
+      filter: drop-shadow(0 10px 18px rgba(0,0,0,0.2));
+    }
+    .muffin-caption {
+      margin-top: 8px;
+      color: #ff4d6d;
+      font-weight: 700;
+    }
+    @keyframes floatIn {
+      0% { transform: translateY(10px) scale(0.95); opacity: 0; }
+      100% { transform: translateY(0) scale(1); opacity: 1; }
     }
 
     /* Confetti canvas */
@@ -102,14 +125,19 @@
 
 <body>
   <div class="card">
-    <h1>Will you be my Valentine? 💘</h1>
+    <h1>Morgan, please will you be my Valentine? 💘</h1>
 
     <div class="buttons">
       <button id="yes">Yes 💖</button>
       <button id="no">No 😬</button>
     </div>
 
-    <div class="message" id="message">YAYYY 💕 I love you 😘</div>
+    <div class="message" id="message">YAYYY 💕</div>
+
+    <div class="muffin-wrap" id="muffinWrap" aria-live="polite">
+      <div class="muffin" aria-label="muffin">🧁</div>
+      <div class="muffin-caption">A muffin for my Valentine 😘</div>
+    </div>
   </div>
 
   <canvas id="confetti"></canvas>
@@ -118,6 +146,7 @@
     const noBtn = document.getElementById("no");
     const yesBtn = document.getElementById("yes");
     const message = document.getElementById("message");
+    const muffinWrap = document.getElementById("muffinWrap");
 
     // ---- Smooth "No" movement ----
     let noX = 0;
@@ -133,12 +162,10 @@
       const distance = Math.sqrt(dx * dx + dy * dy);
 
       if (distance < 130) {
-        // move opposite direction of cursor
         const step = 18;
         noX += (-dx / distance) * step;
         noY += (-dy / distance) * step;
 
-        // clamp so it stays near the card and doesn't go crazy
         noX = Math.max(-180, Math.min(180, noX));
         noY = Math.max(-120, Math.min(120, noY));
 
@@ -237,17 +264,19 @@
       requestAnimationFrame(stepConfetti);
     }
 
-    // ---- YES button: confetti + pop + message ----
+    // ---- YES button: confetti + pop + message + muffin ----
     yesBtn.addEventListener("click", () => {
       message.textContent = "YAYYY 💕 Best decision ever 😘";
       message.style.display = "block";
 
       const card = document.querySelector(".card");
       card.classList.remove("pop");
-      void card.offsetWidth; // restart animation
+      void card.offsetWidth;
       card.classList.add("pop");
 
-      startConfetti(3000);
+      muffinWrap.style.display = "block";
+
+      startConfetti(3200);
 
       yesBtn.style.display = "none";
       noBtn.style.display = "none";
